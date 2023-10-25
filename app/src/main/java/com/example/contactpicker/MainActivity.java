@@ -54,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
         activityResultLauncher.launch(pickContact);
     }
 
-    @SuppressLint("Range")
     ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() == RESULT_OK) {
             Intent data = result.getData();
@@ -67,8 +66,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (cursor1 != null && cursor1.moveToFirst()) {
-                    String contactId = cursor1.getString(cursor1.getColumnIndex(ContactsContract.Contacts._ID));
-                    String idResults = cursor1.getString(cursor1.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
+                    String contactId = cursor1.getString(cursor1.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
+                    String idResults = cursor1.getString(cursor1.getColumnIndexOrThrow(ContactsContract.Contacts.HAS_PHONE_NUMBER));
                     int idResultHold = Integer.parseInt(idResults);
 
                     if (idResultHold == 1) {
@@ -81,13 +80,12 @@ public class MainActivity extends AppCompatActivity {
 
                         if (cursor2 != null) {
                             cursor2.moveToFirst();
-                            String contactNumber = cursor2.getString(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                            String name = cursor2.getString(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                            String contactNumber = cursor2.getString(cursor2.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            String name = cursor2.getString(cursor2.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
 
                             Toast.makeText(MainActivity.this, "Name: " + name + "\n" + "Number: " + contactNumber, Toast.LENGTH_SHORT).show();
                             cursor2.close();
                         }
-
                     } else {
                         Toast.makeText(this, "No contact number found!", Toast.LENGTH_SHORT).show();
                     }
