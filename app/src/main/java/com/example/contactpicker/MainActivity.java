@@ -1,6 +1,7 @@
 package com.example.contactpicker;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.widget.Button;
 import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -52,40 +54,45 @@ public class MainActivity extends AppCompatActivity {
         activityResultLauncher.launch(pickContact);
     }
 
-    ActivityResultLauncher<Intent> activityResultLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                    result -> {
-                        if (result.getResultCode() == RESULT_OK) {
-                            Intent data = result.getData();
-                            if (data != null) {
-                                Uri contactUri = data.getData();
+    @SuppressLint("Range")
+    ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        if (result.getResultCode() == RESULT_OK) {
+            Intent data = result.getData();
+            Cursor cursor1 = null, cursor2;
 
-                                String[] queryFields = new String[]{ContactsContract.Contacts.DISPLAY_NAME};
+            if (data != null) {
+                Uri uri = data.getData();
+                if (uri != null) {
+                    cursor1 = getContentResolver().query(uri, null, null, null, null);
+                }
 
-                                Cursor cursor = null;
-                                if (contactUri != null) {
-                                    cursor = this.getContentResolver()
-                                            .query(contactUri, queryFields, null, null, null);
-                                }
-                                try {
-                                    if (cursor != null && cursor.getCount() == 0) return;
+                if (cursor1 != null && cursor1.moveToFirst()) {
+                    String contactId = cursor1.getString(cursor1.getColumnIndex(ContactsContract.Contacts._ID));
+                    String idResults = cursor1.getString(cursor1.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
+                    int idResultHold = Integer.parseInt(idResults);
 
-                                    if (cursor != null) {
-                                        cursor.moveToFirst();
-                                    }
+                    if (idResultHold == 1) {
+                        cursor2 = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                null,
+                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId,
+                                null,
+                                null
+                        );
 
-                                    String name = null;
-                                    if (cursor != null) {
-                                        name = cursor.getString(0);
-                                    }
-                                    Toast.makeText(MainActivity.this, "Name: " + name, Toast.LENGTH_SHORT).show();
-                                } finally {
-                                    if (cursor != null) {
-                                        cursor.close();
-                                    }
-                                }
-                            }
+                        if (cursor2 != null) {
+                            cursor2.moveToFirst();
+                            String contactNumber = cursor2.getString(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            String name = cursor2.getString(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+
+                            Toast.makeText(MainActivity.this, "Name: " + name + "\n" + "Number: " + contactNumber, Toast.LENGTH_SHORT).show();
+                            cursor2.close();
                         }
-                    });
 
+                    } else {
+                        Toast.makeText(this, "No contact number found!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        }
+    });
 }
